@@ -2,17 +2,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/navigation_home"
+        android:id="@+id/navigation_ullada"
         android:icon="@drawable/ic_ullada"
         android:title="@string/bottom_ullada" />
 
     <item
-        android:id="@+id/navigation_dashboard"
+        android:id="@+id/navigation_history"
         android:icon="@drawable/ic_history"
         android:title="@string/bottom_historial" />
 
     <item
-        android:id="@+id/navigation_notifications"
+        android:id="@+id/navigation_account"
         android:icon="@drawable/ic_account"
         android:title="@string/bottom_compte" />
 
