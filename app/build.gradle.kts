@@ -37,6 +37,10 @@ android {
         viewBinding = true
     }
     buildToolsVersion = "34.0.0"
+    dependenciesInfo {
+        includeInApk = true
+        includeInBundle = true
+    }
 
 
 }
@@ -51,6 +55,10 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.core)
+
+
+    implementation(libs.androidx.camera.camera.view5)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

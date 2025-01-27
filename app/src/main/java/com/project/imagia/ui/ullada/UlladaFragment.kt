@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.project.imagia.databinding.FragmentUlladaBinding
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -24,16 +25,25 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.abs
 
 
-
+typealias LumaListener = (luma: Double) -> Unit
 
 class UlladaFragment : Fragment() ,SensorEventListener{
 
@@ -41,6 +51,9 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     private lateinit var accelerometer: Sensor
     private lateinit var linearAccelerometer: Sensor
     private var _binding: FragmentUlladaBinding? = null
+    private var imageCapture: ImageCapture? = null
+    private lateinit var cameraExecutor: ExecutorService
+
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -73,6 +86,10 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         _binding = FragmentUlladaBinding.inflate(inflater, container, false)
         val root: View = binding.root
         sensorManager
+        // Set up the listeners for take photo and video capture buttons
+        _binding!!.button.setOnClickListener { takePhoto() }
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
         val takePictureIntent =  Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         val textView: TextView = binding.textHome
@@ -80,6 +97,45 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             textView.text = it
         }
         return root
+    }
+    private fun takePhoto() {
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+
+        // Create time stamped name and MediaStore entry.
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
+        }
+
+        // Create output options object which contains file + metadata
+        val outputOptions = ImageCapture.OutputFileOptions
+            .Builder(requireContext().contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues)
+            .build()
+
+        // Set up image capture listener, which is triggered after photo has
+        // been taken
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(this.requireContext()),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun
+                        onImageSaved(output: ImageCapture.OutputFileResults){
+                    val msg = "Photo capture succeeded: ${output.savedUri}"
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, msg)
+                }
+            }
+        )
     }
 
     override fun onDestroyView() {
@@ -127,6 +183,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     }
     companion object {
         private const val TAG = "CameraXApp"
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
                 Manifest.permission.CAMERA,
@@ -153,45 +210,55 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraProviderFuture.addListener({
-            // Used to bind the lifecycle of cameras to the lifecycle owner
+            // Obtén el proveedor de cámara
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Preview
-            val preview = Preview.Builder()
+            // Selecciona la cámara trasera como predeterminada
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build()
-                .also {
-                    it.setSurfaceProvider(
-                        binding.viewFinder.surfaceProvider)
-                }
-            imageCapture = ImageCapture.Builder()
-                .build()
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                        Log.d(TAG, "Average luminosity: $luma")
-                    })
-                }
-            // Select back camera as a default
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
-                // Unbind use cases before rebinding
+                // Unbind all use cases antes de volver a adjuntar
                 cameraProvider.unbindAll()
 
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageCapture, imageAnalyzer)
+                // Vincula el caso de vista previa
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(binding.previewFinder.surfaceProvider)
+                }
 
-            } catch(exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+
+            } catch (exc: Exception) {
+                Log.e(TAG, "Error al vincular la cámara", exc)
             }
-
-        }, ContextCompat.getMainExecutor(this))
+        }, ContextCompat.getMainExecutor(requireContext()))
     }
+    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+
+        private fun ByteBuffer.toByteArray(): ByteArray {
+            rewind()    // Rewind the buffer to zero
+            val data = ByteArray(remaining())
+            get(data)   // Copy the buffer into a byte array
+            return data // Return the byte array
+        }
+
+        override fun analyze(image: ImageProxy) {
+
+            val buffer = image.planes[0].buffer
+            val data = buffer.toByteArray()
+            val pixels = data.map { it.toInt() and 0xFF }
+            val luma = pixels.average()
+
+            listener(luma)
+
+            image.close()
+        }
+    }
+
 
 
 
