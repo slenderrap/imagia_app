@@ -85,7 +85,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
 
         _binding = FragmentUlladaBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        sensorManager
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // Set up the listeners for take photo and video capture buttons
         _binding!!.button.setOnClickListener { takePhoto() }
 
@@ -96,9 +96,10 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         ulladaViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
-        return root
+        return binding.root
     }
     private fun takePhoto() {
+
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
@@ -111,6 +112,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
         }
 
+
         // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(requireContext().contentResolver,
@@ -118,7 +120,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                 contentValues)
             .build()
 
-        // Set up image capture listener, which is triggered after photo has
+
         // been taken
         imageCapture.takePicture(
             outputOptions,
@@ -225,12 +227,15 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                 // Unbind all use cases antes de volver a adjuntar
                 cameraProvider.unbindAll()
 
+
+                imageCapture = ImageCapture.Builder()
+                    .setTargetRotation(requireActivity().windowManager.defaultDisplay.rotation)
+                    .build()
                 // Vincula el caso de vista previa
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(binding.previewFinder.surfaceProvider)
                 }
-
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview,imageCapture)
 
             } catch (exc: Exception) {
                 Log.e(TAG, "Error al vincular la cámara", exc)
