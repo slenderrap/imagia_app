@@ -62,7 +62,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     private var tapCounterX = 0
     private var tapCounterY = 0
     private var tapCounterZ = 0
-    private val threshold = 2.0
+    private val threshold = 6.0
     private val timeWindow = 300L
     private var lastTapTime = 0L
 
@@ -72,6 +72,8 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -85,12 +87,15 @@ class UlladaFragment : Fragment() ,SensorEventListener{
 
         _binding = FragmentUlladaBinding.inflate(inflater, container, false)
         val root: View = binding.root
-        sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // Set up the listeners for take photo and video capture buttons
         _binding!!.button.setOnClickListener { takePhoto() }
 
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
+        linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
+
+        sensorManager.registerListener(this,linearAccelerometer,SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this,linearAccelerometer,SensorManager.SENSOR_DELAY_NORMAL)
         cameraExecutor = Executors.newSingleThreadExecutor()
-        val takePictureIntent =  Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         val textView: TextView = binding.textHome
         ulladaViewModel.text.observe(viewLifecycleOwner) {
@@ -140,33 +145,40 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         )
     }
 
+
     override fun onDestroyView() {
         super.onDestroyView()
+        cameraExecutor.shutdown()
+        sensorManager.unregisterListener(this)
         _binding = null
     }
-     override fun onSensorChanged(event: SensorEvent){
+    override fun onSensorChanged(event: SensorEvent){
 
         val x = event.values[0]
         val y = event.values[1]
         val z = event.values[2]
+        detectDoubleTap(x, y, z)
+
+
 
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        TODO("Not yet implemented")
+        // no hace falta implementarlo porque no cambia la precision de los sensores
     }
 
-//    private fun detectDoubleTap(x: Float, y: Float, z: Float) {
-//        val currentTime = System.currentTimeMillis()
-//        if (x > threshold || y > threshold || z > threshold) {
-//            if (currentTime - lastTapTime < timeWindow) {
-//                binding.doubleTapInfo.text = "Double Tap Detectat"
-//            } else {
-//                binding.doubleTapInfo.text = "Esperant un segon tap"
-//            }
-//            lastTapTime = currentTime
-//        }
-//    }
+    private fun detectDoubleTap(x: Float, y: Float, z: Float) {
+        val currentTime = System.currentTimeMillis()
+        if (abs(x) > threshold || abs(y) > threshold || abs(z) > threshold) {
+            if (currentTime - lastTapTime < timeWindow) {
+                Toast.makeText(requireContext(),"S'ha detectat un segon tap",Toast.LENGTH_SHORT).show()
+                takePhoto()
+            } else {
+                Toast.makeText(requireContext(),"S'ha detectat un tap",Toast.LENGTH_SHORT).show()
+            }
+            lastTapTime = currentTime
+        }
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("tapCounterX", tapCounterX)
