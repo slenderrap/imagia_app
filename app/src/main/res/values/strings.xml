@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ImagIA</string>
+    <string name="bottom_ullada">Ullada</string>
+    <string name="bottom_historial">Historial</string>
+    <string name="bottom_compte">Compte</string>
+    <string name="obre_la_camera">Fes una foto</string>
+</resources>
