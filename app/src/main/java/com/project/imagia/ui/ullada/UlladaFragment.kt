@@ -15,10 +15,13 @@ import com.project.imagia.databinding.FragmentUlladaBinding
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -43,6 +46,7 @@ import java.util.concurrent.Executors
 import kotlin.math.abs
 import android.util.Base64
 import androidx.core.net.toUri
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.project.imagia.MainActivity
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -50,9 +54,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 
 typealias LumaListener = (luma: Double) -> Unit
@@ -154,7 +163,8 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                     Log.d(TAG, msg)
 
                     output.savedUri?.let { imageUri ->
-                        sendImageToServer(imageUri.toString())
+                        val compressedUri = compressImage(requireContext(),imageUri)
+                        sendImageToServer(compressedUri.toString())
                     }
                 }
             }
@@ -301,18 +311,23 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             return
         }
 
+
         // Convierte la imagen a Base64
         val base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT)
 
         // Crear el JSON con la imagen
         val json = JSONObject()
-        val imageInArray: Array<String> = arrayOf(base64Image)
+
+        val imageInArray: JSONArray = JSONArray()
+        imageInArray.put(base64Image)
         json.put("images", imageInArray)
         json.put("prompt", "Describe la imagen")
         json.put("stream", false)
 
         // Crear cliente OkHttp
-        val client = OkHttpClient()
+        val client = OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
 
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body: RequestBody = json.toString().toRequestBody(mediaType)
@@ -321,6 +336,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val request = Request.Builder()
             .url("https://imagia5.ieti.site/api/analitzar-imatge")
             .addHeader("Authorization","Bearer ABCD1234EFGH5678IJKL")
+            .addHeader("Content-Type","application/json")
             .post(body)
             .build()
 
@@ -331,13 +347,38 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                     val responseBody = response.body?.string()
                     Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
                 } else {
-                    Log.e("POST_ERROR", "Error en la petición: ${response.code}")
+                    Log.e("POST_ERROR", "Error en la petición: ${response.code}: ${response.message}")
                 }
             } catch (e: Exception) {
                 Log.e("POST_EXCEPTION", "Error al enviar la imagen", e)
             }
         }.start()
     }
+
+    private fun compressImage(context: Context, imageUri: Uri): Uri? {
+        return try {
+            // Leer la imagen como Bitmap
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            // Crear un archivo temporal para guardar la imagen comprimida
+            val tempFile = File(context.cacheDir, "compressed_image.jpg")
+            val outputStream = FileOutputStream(tempFile)
+
+            // Comprimir la imagen sin cambiar su resolución
+            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream) // Calidad al 50%
+            outputStream.flush()
+            outputStream.close()
+
+            // Devolver la URI del archivo comprimido
+            Uri.fromFile(tempFile)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al comprimir la imagen", e)
+            null
+        }
+    }
+
 
 
 }
