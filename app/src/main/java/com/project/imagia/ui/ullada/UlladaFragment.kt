@@ -41,6 +41,18 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
+import android.util.Base64
+import androidx.core.net.toUri
+import com.project.imagia.MainActivity
+import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.File
+import java.io.FileInputStream
 
 
 typealias LumaListener = (luma: Double) -> Unit
@@ -140,6 +152,10 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                     val msg = "Photo capture succeeded: ${output.savedUri}"
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                     Log.d(TAG, msg)
+
+                    output.savedUri?.let { imageUri ->
+                        sendImageToServer(imageUri.toString())
+                    }
                 }
             }
         )
@@ -276,7 +292,52 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         }
     }
 
+    private fun sendImageToServer(imageUri: String) {
+        // Leer la imagen y convertirla a Base64
+        val inputStream = requireContext().contentResolver.openInputStream(imageUri.toUri())
+        val imageBytes = inputStream?.use { it.readBytes() }
+        if (imageBytes == null) {
+            Log.e("SEND_IMAGE", "No se pudo leer la imagen desde la URI")
+            return
+        }
 
+        // Convierte la imagen a Base64
+        val base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT)
+
+        // Crear el JSON con la imagen
+        val json = JSONObject()
+        val imageInArray: Array<String> = arrayOf(base64Image)
+        json.put("images", imageInArray)
+        json.put("prompt", "Describe la imagen")
+        json.put("stream", false)
+
+        // Crear cliente OkHttp
+        val client = OkHttpClient()
+
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val body: RequestBody = json.toString().toRequestBody(mediaType)
+
+
+        val request = Request.Builder()
+            .url("https://imagia5.ieti.site/api/analitzar-imatge")
+            .addHeader("Authorization","Bearer ABCD1234EFGH5678IJKL")
+            .post(body)
+            .build()
+
+        Thread {
+            try {
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
+                } else {
+                    Log.e("POST_ERROR", "Error en la petición: ${response.code}")
+                }
+            } catch (e: Exception) {
+                Log.e("POST_EXCEPTION", "Error al enviar la imagen", e)
+            }
+        }.start()
+    }
 
 
 }

@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.project.imagia"
-        minSdk = 34
+        minSdk = 33
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2) // Asegúrate de que esta esté incluida
     implementation(libs.androidx.camera.view)
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
