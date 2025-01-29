@@ -1,0 +1,102 @@
+Index: app/src/main/java/com/project/imagia/ui/ullada/UlladaFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.project.imagia.ui.ullada\n\nimport android.Manifest\nimport android.content.Context\nimport android.content.Intent\nimport android.os.Bundle\nimport android.provider.MediaStore\nimport android.view.LayoutInflater\nimport android.view.View\nimport android.view.ViewGroup\nimport android.widget.TextView\nimport androidx.fragment.app.Fragment\nimport androidx.lifecycle.ViewModelProvider\nimport com.project.imagia.databinding.FragmentUlladaBinding\nimport android.annotation.SuppressLint\nimport android.content.ContentValues\nimport android.content.pm.PackageManager\nimport android.hardware.Sensor\nimport android.hardware.SensorEvent\nimport android.hardware.SensorEventListener\nimport android.hardware.SensorManager\nimport android.os.Build\nimport android.util.Log\nimport android.widget.Toast\nimport androidx.activity.enableEdgeToEdge\nimport androidx.activity.result.contract.ActivityResultContracts\nimport androidx.appcompat.app.AppCompatActivity\nimport androidx.camera.core.CameraSelector\nimport androidx.camera.core.ImageAnalysis\nimport androidx.camera.core.ImageCapture\nimport androidx.camera.core.ImageCaptureException\nimport androidx.camera.core.ImageProxy\nimport androidx.camera.core.Preview\nimport androidx.camera.lifecycle.ProcessCameraProvider\nimport androidx.core.content.ContextCompat\nimport androidx.core.view.ViewCompat\nimport androidx.core.view.WindowInsetsCompat\nimport java.nio.ByteBuffer\nimport java.text.SimpleDateFormat\nimport java.util.Locale\nimport java.util.concurrent.ExecutorService\nimport java.util.concurrent.Executors\nimport kotlin.math.abs\n\n\ntypealias LumaListener = (luma: Double) -> Unit\n\nclass UlladaFragment : Fragment() ,SensorEventListener{\n\n    private lateinit var sensorManager: SensorManager\n    private lateinit var accelerometer: Sensor\n    private lateinit var linearAccelerometer: Sensor\n    private var _binding: FragmentUlladaBinding? = null\n    private var imageCapture: ImageCapture? = null\n    private lateinit var cameraExecutor: ExecutorService\n\n\n    // This property is only valid between onCreateView and\n    // onDestroyView.\n    private val binding get() = _binding!!\n\n    private var tapCounterX = 0\n    private var tapCounterY = 0\n    private var tapCounterZ = 0\n    private val threshold = 2.0\n    private val timeWindow = 300L\n    private var lastTapTime = 0L\n\n\n    override fun onCreateView(\n        inflater: LayoutInflater,\n        container: ViewGroup?,\n        savedInstanceState: Bundle?\n    ): View? {\n\n        if (allPermissionsGranted()) {\n            startCamera()\n        } else {\n            requestPermissions()\n        }\n\n\n        val ulladaViewModel =\n            ViewModelProvider(this).get(UlladaViewModel::class.java)\n\n        _binding = FragmentUlladaBinding.inflate(inflater, container, false)\n        val root: View = binding.root\n        sensorManager\n        // Set up the listeners for take photo and video capture buttons\n        _binding!!.button.setOnClickListener { takePhoto() }\n\n        cameraExecutor = Executors.newSingleThreadExecutor()\n        val takePictureIntent =  Intent(MediaStore.ACTION_IMAGE_CAPTURE)\n\n        val textView: TextView = binding.textHome\n        ulladaViewModel.text.observe(viewLifecycleOwner) {\n            textView.text = it\n        }\n        return root\n    }\n    private fun takePhoto() {\n        // Get a stable reference of the modifiable image capture use case\n        val imageCapture = imageCapture ?: return\n\n        // Create time stamped name and MediaStore entry.\n        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)\n            .format(System.currentTimeMillis())\n        val contentValues = ContentValues().apply {\n            put(MediaStore.MediaColumns.DISPLAY_NAME, name)\n            put(MediaStore.MediaColumns.MIME_TYPE, \"image/jpeg\")\n            put(MediaStore.Images.Media.RELATIVE_PATH, \"Pictures/CameraX-Image\")\n        }\n\n        // Create output options object which contains file + metadata\n        val outputOptions = ImageCapture.OutputFileOptions\n            .Builder(requireContext().contentResolver,\n                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,\n                contentValues)\n            .build()\n\n        // Set up image capture listener, which is triggered after photo has\n        // been taken\n        imageCapture.takePicture(\n            outputOptions,\n            ContextCompat.getMainExecutor(this.requireContext()),\n            object : ImageCapture.OnImageSavedCallback {\n                override fun onError(exc: ImageCaptureException) {\n                    Log.e(TAG, \"Photo capture failed: ${exc.message}\", exc)\n                }\n\n                override fun\n                        onImageSaved(output: ImageCapture.OutputFileResults){\n                    val msg = \"Photo capture succeeded: ${output.savedUri}\"\n                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()\n                    Log.d(TAG, msg)\n                }\n            }\n        )\n    }\n\n    override fun onDestroyView() {\n        super.onDestroyView()\n        _binding = null\n    }\n     override fun onSensorChanged(event: SensorEvent){\n\n        val x = event.values[0]\n        val y = event.values[1]\n        val z = event.values[2]\n\n    }\n\n    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {\n        TODO(\"Not yet implemented\")\n    }\n\n//    private fun detectDoubleTap(x: Float, y: Float, z: Float) {\n//        val currentTime = System.currentTimeMillis()\n//        if (x > threshold || y > threshold || z > threshold) {\n//            if (currentTime - lastTapTime < timeWindow) {\n//                binding.doubleTapInfo.text = \"Double Tap Detectat\"\n//            } else {\n//                binding.doubleTapInfo.text = \"Esperant un segon tap\"\n//            }\n//            lastTapTime = currentTime\n//        }\n//    }\n    override fun onSaveInstanceState(outState: Bundle) {\n        super.onSaveInstanceState(outState)\n        outState.putInt(\"tapCounterX\", tapCounterX)\n        outState.putInt(\"tapCounterY\", tapCounterY)\n        outState.putInt(\"tapCounterZ\", tapCounterZ)\n    }\n\n\n    private fun requestPermissions() {\n        activityResultLauncher.launch(REQUIRED_PERMISSIONS)\n    }\n\n    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {\n        ContextCompat.checkSelfPermission(\n            requireContext(), it) == PackageManager.PERMISSION_GRANTED\n    }\n    companion object {\n        private const val TAG = \"CameraXApp\"\n        private const val FILENAME_FORMAT = \"yyyy-MM-dd-HH-mm-ss-SSS\"\n        private val REQUIRED_PERMISSIONS =\n            mutableListOf (\n                Manifest.permission.CAMERA,\n            ).apply {\n            }.toTypedArray()\n    }\n    private val activityResultLauncher =\n        registerForActivityResult(\n            ActivityResultContracts.RequestMultiplePermissions())\n        { permissions ->\n            // Handle Permission granted/rejected\n            var permissionGranted = true\n            permissions.entries.forEach {\n                if (it.key in REQUIRED_PERMISSIONS && it.value == false)\n                    permissionGranted = false\n            }\n            if (!permissionGranted) {\n                Toast.makeText(requireContext(),\n                    \"Permission request denied\",\n                    Toast.LENGTH_SHORT).show()\n            } else {\n                startCamera()\n            }\n        }\n\n    private fun startCamera() {\n        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())\n\n        cameraProviderFuture.addListener({\n            // Obtén el proveedor de cámara\n            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()\n\n            // Selecciona la cámara trasera como predeterminada\n            val cameraSelector = CameraSelector.Builder()\n                .requireLensFacing(CameraSelector.LENS_FACING_BACK)\n                .build()\n\n            try {\n                // Unbind all use cases antes de volver a adjuntar\n                cameraProvider.unbindAll()\n\n                // Vincula el caso de vista previa\n                val preview = Preview.Builder().build().also {\n                    it.setSurfaceProvider(binding.previewFinder.surfaceProvider)\n                }\n\n                cameraProvider.bindToLifecycle(this, cameraSelector, preview)\n\n            } catch (exc: Exception) {\n                Log.e(TAG, \"Error al vincular la cámara\", exc)\n            }\n        }, ContextCompat.getMainExecutor(requireContext()))\n    }\n    private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {\n\n        private fun ByteBuffer.toByteArray(): ByteArray {\n            rewind()    // Rewind the buffer to zero\n            val data = ByteArray(remaining())\n            get(data)   // Copy the buffer into a byte array\n            return data // Return the byte array\n        }\n\n        override fun analyze(image: ImageProxy) {\n\n            val buffer = image.planes[0].buffer\n            val data = buffer.toByteArray()\n            val pixels = data.map { it.toInt() and 0xFF }\n            val luma = pixels.average()\n\n            listener(luma)\n\n            image.close()\n        }\n    }\n\n\n\n\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/imagia/ui/ullada/UlladaFragment.kt b/app/src/main/java/com/project/imagia/ui/ullada/UlladaFragment.kt
+--- a/app/src/main/java/com/project/imagia/ui/ullada/UlladaFragment.kt	
++++ b/app/src/main/java/com/project/imagia/ui/ullada/UlladaFragment.kt	
+@@ -32,6 +32,7 @@
+ import androidx.camera.core.ImageProxy
+ import androidx.camera.core.Preview
+ import androidx.camera.lifecycle.ProcessCameraProvider
++import androidx.core.app.ActivityCompat
+ import androidx.core.content.ContextCompat
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.WindowInsetsCompat
+@@ -172,6 +173,22 @@
+         outState.putInt("tapCounterZ", tapCounterZ)
+     }
+ 
++    private fun checkPermissions(): Boolean{
++        val permissions = arrayOf(
++            Manifest.permission.CAMERA,
++            Manifest.permission.WRITE_EXTERNAL_STORAGE,
++            Manifest.permission.READ_EXTERNAL_STORAGE
++        )
++
++        val notGranted = permissions.filter {
++            ContextCompat.checkSelfPermission(requireContext(), it) != PackageManager.PERMISSION_GRANTED
++        }
++
++        if (notGranted.isNotEmpty()) {
++            ActivityCompat.requestPermissions(requireActivity(), notGranted.toTypedArray(), 3)
++        }
++
++    }
+ 
+     private fun requestPermissions() {
+         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
+@@ -210,33 +227,45 @@
+         }
+ 
+     private fun startCamera() {
+-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
++        val cameraProviderFuture = ProcessCameraProvider.getInstance(this.requireContext())
+ 
+         cameraProviderFuture.addListener({
+-            // Obtén el proveedor de cámara
++            // Used to bind the lifecycle of cameras to the lifecycle owner
+             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+ 
+-            // Selecciona la cámara trasera como predeterminada
+-            val cameraSelector = CameraSelector.Builder()
+-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
++            // Preview
++            val preview = Preview.Builder()
+                 .build()
++                .also {
++                    it.surfaceProvider = binding.previewFinder.surfaceProvider
++                }
++            imageCapture = ImageCapture.Builder()
++                .build()
++            val imageAnalyzer = ImageAnalysis.Builder()
++                .build()
++                .also {
++                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
++                        Log.d(TAG, "Average luminosity: $luma")
++                    })
++                }
++            // Select back camera as a default
++            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+ 
+             try {
+-                // Unbind all use cases antes de volver a adjuntar
++                // Unbind use cases before rebinding
+                 cameraProvider.unbindAll()
+ 
+-                // Vincula el caso de vista previa
+-                val preview = Preview.Builder().build().also {
+-                    it.setSurfaceProvider(binding.previewFinder.surfaceProvider)
+-                }
+-
+-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
++                // Bind use cases to camera
++                cameraProvider.bindToLifecycle(
++                    this, cameraSelector, preview, imageCapture, imageAnalyzer)
+ 
+-            } catch (exc: Exception) {
+-                Log.e(TAG, "Error al vincular la cámara", exc)
++            } catch(exc: Exception) {
++                Log.e(TAG, "Use case binding failed", exc)
+             }
+-        }, ContextCompat.getMainExecutor(requireContext()))
++
++        }, ContextCompat.getMainExecutor(this.requireContext()))
+     }
++
+     private class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
+ 
+         private fun ByteBuffer.toByteArray(): ByteArray {

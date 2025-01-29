@@ -58,7 +58,7 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2) // Asegúrate de que esta esté incluida
     implementation(libs.androidx.camera.view)
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

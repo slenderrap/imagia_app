@@ -106,7 +106,6 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
 
         sensorManager.registerListener(this,linearAccelerometer,SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager.registerListener(this,linearAccelerometer,SensorManager.SENSOR_DELAY_NORMAL)
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         val textView: TextView = binding.textHome
