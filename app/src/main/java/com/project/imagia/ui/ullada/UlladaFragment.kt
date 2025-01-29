@@ -23,6 +23,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Build
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -79,7 +80,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-
+    private var tts: TextToSpeech?=null
     private var tapCounterX = 0
     private var tapCounterY = 0
     private var tapCounterZ = 0
@@ -120,6 +121,11 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val textView: TextView = binding.textHome
         ulladaViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
+        }
+        tts = TextToSpeech(requireContext()){ status->
+            if (status != TextToSpeech.ERROR){
+                tts?.language= Locale.getDefault()
+            }
         }
         return binding.root
     }
@@ -345,9 +351,11 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
                     Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
+                    tts?.speak(responseBody?.let { JSONObject(it).get("data").toString() },TextToSpeech.QUEUE_FLUSH,null,null)
                 } else {
                     Log.e("POST_ERROR", "Error en la petición: ${response.code}: ${response.message}")
                 }
+
             } catch (e: Exception) {
                 Log.e("POST_EXCEPTION", "Error al enviar la imagen", e)
             }
