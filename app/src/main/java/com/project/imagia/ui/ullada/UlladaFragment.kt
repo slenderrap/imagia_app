@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import android.util.Base64
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.project.imagia.MainActivity
@@ -124,7 +125,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         }
         tts = TextToSpeech(requireContext()){ status->
             if (status != TextToSpeech.ERROR){
-                tts?.language= Locale.getDefault()
+                tts?.language= Locale("CA","ES")
             }
         }
         return binding.root
@@ -154,28 +155,24 @@ class UlladaFragment : Fragment() ,SensorEventListener{
 
         // been taken
         imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(this.requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
+            ContextCompat.getMainExecutor(requireContext()),
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    val bitmap = image.toBitmap() // Convierte ImageProxy a Bitmap fácilmente
+                    val compressedUri = compressImage(requireContext(), saveBitmapToCache(requireContext(), bitmap))
+                    sendImageToServer(compressedUri.toString())
+                    image.close()
+                }
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                 }
-
-                override fun
-                        onImageSaved(output: ImageCapture.OutputFileResults){
-                    val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
-
-                    output.savedUri?.let { imageUri ->
-                        val compressedUri = compressImage(requireContext(),imageUri)
-                        sendImageToServer(compressedUri.toString())
-                    }
-                }
             }
         )
+    }private fun saveBitmapToCache(context: Context, bitmap: Bitmap): Uri {
+        val tempFile = File(context.cacheDir, "temp_image.jpg")
+        FileOutputStream(tempFile).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
+        return FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -326,7 +323,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val imageInArray: JSONArray = JSONArray()
         imageInArray.put(base64Image)
         json.put("images", imageInArray)
-        json.put("prompt", "Describe la imagen")
+        json.put("prompt", "Descriu la imatge resumidament")
         json.put("stream", false)
 
         // Crear cliente OkHttp
@@ -349,7 +346,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             try {
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
+                    val responseBody = response.body?.string()?.replace("*","")
                     Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
                     tts?.speak(responseBody?.let { JSONObject(it).get("data").toString() },TextToSpeech.QUEUE_FLUSH,null,null)
                 } else {
