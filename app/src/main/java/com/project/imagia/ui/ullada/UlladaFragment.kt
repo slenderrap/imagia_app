@@ -2,7 +2,6 @@ package com.project.imagia.ui.ullada
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -12,7 +11,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.project.imagia.databinding.FragmentUlladaBinding
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -22,13 +20,10 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
-import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -37,8 +32,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -48,9 +41,6 @@ import kotlin.math.abs
 import android.util.Base64
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.project.imagia.MainActivity
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -58,12 +48,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration
 
 
 typealias LumaListener = (luma: Double) -> Unit
@@ -88,7 +75,9 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     private val threshold = 6.0
     private val timeWindow = 300L
     private var lastTapTime = 0L
-
+    object GlobalData {
+        var imatgeEnviada: Boolean = false
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -111,7 +100,16 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         _binding = FragmentUlladaBinding.inflate(inflater, container, false)
         val root: View = binding.root
         // Set up the listeners for take photo and video capture buttons
-        _binding!!.button.setOnClickListener { takePhoto() }
+
+        _binding!!.button.setOnClickListener {
+            if (!GlobalData.imatgeEnviada) {
+
+                takePhoto()
+                GlobalData.imatgeEnviada=true
+            }else{
+                Toast.makeText(requireContext(),"Ja has fet una foto",Toast.LENGTH_SHORT).show()
+            }
+        }
 
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
@@ -131,44 +129,60 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         return binding.root
     }
     private fun takePhoto() {
-
-        // Get a stable reference of the modifiable image capture use case
-        val imageCapture = imageCapture ?: return
-
-        // Create time stamped name and MediaStore entry.
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
-        }
+        if(GlobalData.imatgeEnviada){
+            Toast.makeText(requireContext(),"Ja havies fet una foto",Toast.LENGTH_SHORT).show()
+        }else {
+            Toast.makeText(requireContext(), "S'ha fet una foto", Toast.LENGTH_SHORT).show()
+            // Get a stable reference of the modifiable image capture use case
+            val imageCapture = imageCapture ?: return
 
 
-        // Create output options object which contains file + metadata
-        val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(requireContext().contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues)
-            .build()
-
-
-        // been taken
-        imageCapture.takePicture(
-            ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    val bitmap = image.toBitmap() // Convierte ImageProxy a Bitmap fácilmente
-                    val compressedUri = compressImage(requireContext(), saveBitmapToCache(requireContext(), bitmap))
-                    sendImageToServer(compressedUri.toString())
-                    image.close()
-                }
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                }
+            // Create time stamped name and MediaStore entry.
+            val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                .format(System.currentTimeMillis())
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image")
             }
-        )
-    }private fun saveBitmapToCache(context: Context, bitmap: Bitmap): Uri {
+
+
+            // Create output options object which contains file + metadata
+            val outputOptions = ImageCapture.OutputFileOptions
+                .Builder(
+                    requireContext().contentResolver,
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    contentValues
+                )
+                .build()
+            Thread.sleep(1000)
+
+
+            // been taken
+            imageCapture.takePicture(
+                ContextCompat.getMainExecutor(requireContext()),
+                object : ImageCapture.OnImageCapturedCallback() {
+                    override fun onCaptureSuccess(image: ImageProxy) {
+                        val bitmap = image.toBitmap() // Convierte ImageProxy a Bitmap fácilmente
+                        val compressedUri = compressImage(
+                            requireContext(),
+                            saveBitmapToCache(requireContext(), bitmap)
+                        )
+                        sendImageToServer(compressedUri.toString())
+                        image.close()
+                        GlobalData.imatgeEnviada = false
+                    }
+
+                    override fun onError(exc: ImageCaptureException) {
+                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                        GlobalData.imatgeEnviada = false
+                    }
+                }
+            )
+        }
+    }
+
+    private fun saveBitmapToCache(context: Context, bitmap: Bitmap): Uri {
         val tempFile = File(context.cacheDir, "temp_image.jpg")
         FileOutputStream(tempFile).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
         return FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
@@ -200,7 +214,12 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         if (abs(x) > threshold || abs(y) > threshold || abs(z) > threshold) {
             if (currentTime - lastTapTime < timeWindow) {
                 Toast.makeText(requireContext(),"S'ha detectat un segon tap",Toast.LENGTH_SHORT).show()
-                takePhoto()
+                if (!GlobalData.imatgeEnviada) {
+                    GlobalData.imatgeEnviada=true
+                    takePhoto()
+                }else{
+                    Toast.makeText(requireContext(),"Ja has fet una foto",Toast.LENGTH_SHORT).show()
+                }
             } else {
                 Toast.makeText(requireContext(),"S'ha detectat un tap",Toast.LENGTH_SHORT).show()
             }
