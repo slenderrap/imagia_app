@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2) // Asegúrate de que esta esté incluida
     implementation(libs.androidx.camera.view)
     implementation(libs.okhttp)
+    implementation(libs.androidx.activity)
     //implementation(libs.androidx.activity)
 
 

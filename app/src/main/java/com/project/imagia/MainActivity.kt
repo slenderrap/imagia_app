@@ -26,18 +26,27 @@ class MainActivity : AppCompatActivity() {
         val historial = binding.navView.menu.getItem(1)
         val compte = binding.navView.menu.getItem(2)
 
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                ullada.itemId,
-                historial.itemId,
-                compte.itemId,
+        val sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+        val nombre = sharedPreferences.getString("nombre", "Default")
+        val token = sharedPreferences.getInt("token", 0)
+        if(nombre.equals("Default") && token==0) {
+            intent
+
+        }
+        else{
+            val navController = findNavController(R.id.nav_host_fragment_activity_main)
+            // Passing each menu ID as a set of Ids because each
+            // menu should be considered as top level destinations
+            val appBarConfiguration = AppBarConfiguration(
+                setOf(
+                    ullada.itemId,
+                    historial.itemId,
+                    compte.itemId,
                 )
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+            )
+            setupActionBarWithNavController(navController, appBarConfiguration)
+            navView.setupWithNavController(navController)
+        }
 
     }
 }
