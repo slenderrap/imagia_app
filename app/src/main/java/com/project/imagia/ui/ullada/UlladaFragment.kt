@@ -121,7 +121,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         return binding.root
     }
     private fun takePhoto() {
-
+        Log.i("INFO","El estado es ${imatgeEnviada}")
         val imageCapture = imageCapture ?: return
         if (imatgeEnviada) {
             Toast.makeText(requireContext(),"Ja has fet una foto",Toast.LENGTH_SHORT).show()
@@ -151,8 +151,6 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                 contentValues
             )
             .build()
-        Thread.sleep(1000)
-
 
         // been taken
         imageCapture?.takePicture(
@@ -331,7 +329,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val imageInArray: JSONArray = JSONArray()
         imageInArray.put(base64Image)
         json.put("images", imageInArray)
-        json.put("prompt", "Descriu la imatge resumidament")
+        json.put("prompt", "Descriu la imatge resumidament y en catala")
         json.put("stream", false)
 
         // Crear cliente OkHttp
@@ -360,8 +358,10 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                 } else {
                     Log.e("POST_ERROR", "Error en la petición: ${response.code}: ${response.message}")
                 }
+                imatgeEnviada=false
 
             } catch (e: Exception) {
+                imatgeEnviada=false
                 Log.e("POST_EXCEPTION", "Error al enviar la imagen", e)
             }
         }.start()
