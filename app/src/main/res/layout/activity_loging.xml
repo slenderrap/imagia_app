@@ -10,35 +10,33 @@
 
     <EditText
         android:id="@+id/userTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
         android:contentDescription="@string/username"
         android:textColor="#3C3744"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/passwordEditTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-    />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/passwordEditTextView"
-        android:layout_width="73dp"
-        android:layout_height="20dp"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
+        android:inputType="textPassword"
         android:text="@string/password"
         android:textSize="16sp"
-        android:inputType="textPassword"
         app:layout_constraintBottom_toTopOf="@+id/mailTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/userTextView"
-    />
+        app:layout_constraintTop_toBottomOf="@+id/userTextView" />
 
 
-    <TextView
+    <EditText
         android:id="@+id/mailTextView"
-        android:layout_width="70dp"
-        android:layout_height="14dp"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
         android:text="@string/mail"
         tools:layout_editor_absoluteX="173dp"
         tools:layout_editor_absoluteY="231dp"
@@ -48,10 +46,10 @@
         app:layout_constraintTop_toBottomOf="@+id/passwordEditTextView"
     />
 
-    <TextView
+    <EditText
         android:id="@+id/nicknameTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
         android:text="@string/nickname"
         tools:layout_editor_absoluteX="173dp"
         tools:layout_editor_absoluteY="288dp"
@@ -61,10 +59,10 @@
         app:layout_constraintTop_toBottomOf="@+id/mailTextView"
     />
 
-    <TextView
+    <EditText
         android:id="@+id/telephoneTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="140dp"
+        android:layout_height="40dp"
         android:text="@string/tlf"
         tools:layout_editor_absoluteX="169dp"
         tools:layout_editor_absoluteY="334dp"
