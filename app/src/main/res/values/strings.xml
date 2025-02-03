@@ -9,4 +9,6 @@
     <string name="mail">Mail</string>
     <string name="nickname">Nickname</string>
     <string name="tlf">Telephone</string>
+    <string name="crear_usuari">Crear Usuari</string>
+    <string name="validar">Validar usuari</string>
 </resources>

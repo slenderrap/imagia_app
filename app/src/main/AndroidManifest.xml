@@ -22,7 +22,7 @@
         android:theme="@style/Theme.ImagIA"
         tools:targetApi="31">
         <activity
-            android:name=".LoggingActivity"
+            android:name=".LogingActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

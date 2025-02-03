@@ -5,82 +5,101 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoggingActivity">
+    tools:context=".LogingActivity">
 
 
-    <TextView
+    <EditText
         android:id="@+id/userTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/username"
+        android:contentDescription="@string/username"
         android:textColor="#3C3744"
-        android:textSize="16dp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/passwordEditTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+    />
 
-    <TextView
+    <EditText
         android:id="@+id/passwordEditTextView"
         android:layout_width="73dp"
         android:layout_height="20dp"
-        android:layout_marginTop="106dp"
         android:text="@string/password"
-        android:textSize="16dp"
+        android:textSize="16sp"
+        android:inputType="textPassword"
         app:layout_constraintBottom_toTopOf="@+id/mailTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/userTextView"
-        app:layout_constraintTop_toEndOf="@+id/userTextView" />
+    />
+
 
     <TextView
         android:id="@+id/mailTextView"
         android:layout_width="70dp"
         android:layout_height="14dp"
-        android:text="mail"
+        android:text="@string/mail"
         tools:layout_editor_absoluteX="173dp"
         tools:layout_editor_absoluteY="231dp"
         app:layout_constraintBottom_toTopOf="@+id/nicknameTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/passwordEditTextView"
-
-        />
+        app:layout_constraintTop_toBottomOf="@+id/passwordEditTextView"
+    />
 
     <TextView
         android:id="@+id/nicknameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="nickname"
+        android:text="@string/nickname"
         tools:layout_editor_absoluteX="173dp"
-        tools:layout_editor_absoluteY="288dp" />
+        tools:layout_editor_absoluteY="288dp"
+        app:layout_constraintBottom_toTopOf="@+id/telephoneTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mailTextView"
+    />
 
     <TextView
         android:id="@+id/telephoneTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Telephone"
+        android:text="@string/tlf"
         tools:layout_editor_absoluteX="169dp"
-        tools:layout_editor_absoluteY="334dp" />
+        tools:layout_editor_absoluteY="334dp"
+        app:layout_constraintBottom_toTopOf="@+id/createbtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nicknameTextView"
+    />
 
 
     <Button
         android:id="@+id/createbtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create_User"
+        android:text="@string/crear_usuari"
         tools:layout_editor_absoluteX="162dp"
         tools:layout_editor_absoluteY="450dp"
-        tools:ignore="HardcodedText"
+        app:layout_constraintBottom_toTopOf="@+id/validatebtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/telephoneTextView"
 
-        />
+    />
 
     <Button
         android:id="@+id/validatebtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Validate"
+        android:text="@string/validar"
         tools:layout_editor_absoluteX="182dp"
-        tools:layout_editor_absoluteY="566dp" />
+        tools:layout_editor_absoluteY="566dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createbtn"
+    />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

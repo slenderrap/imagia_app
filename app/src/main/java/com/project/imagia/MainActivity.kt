@@ -1,5 +1,6 @@
 package com.project.imagia
 
+import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
@@ -30,8 +31,8 @@ class MainActivity : AppCompatActivity() {
         val nombre = sharedPreferences.getString("nombre", "Default")
         val token = sharedPreferences.getInt("token", 0)
         if(nombre.equals("Default") && token==0) {
-            intent
-
+            startActivity(Intent(this,LogingActivity::class.java))
+            finish()
         }
         else{
             val navController = findNavController(R.id.nav_host_fragment_activity_main)
