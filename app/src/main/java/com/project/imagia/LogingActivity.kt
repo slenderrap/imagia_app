@@ -3,6 +3,7 @@ package com.project.imagia
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.project.imagia.databinding.ActivityLogingBinding
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -30,12 +31,12 @@ class LogingActivity : AppCompatActivity() {
 
         binding.createbtn.setOnClickListener {
 
-            registrarUsuario("Pedro","pedro@pedro.com","123456","601076940","pedrito")
+            registrarUsuario("Juan1","","123456","601076940","Juanito1")
             binding.validatebtn.visibility = View.VISIBLE
         }
 
         binding.validatebtn.setOnClickListener {
-            validarUsuario("Pedro")
+            validarUsuario("Juan1")
 
         }
 
@@ -58,6 +59,7 @@ class LogingActivity : AppCompatActivity() {
             .addHeader("Content-Type", "application/json")
             .build()
 
+        Toast.makeText(baseContext,"Creant usuari",Toast.LENGTH_SHORT).show()
         Thread {
             try {
                 val response = client.newCall(request).execute()
@@ -65,10 +67,20 @@ class LogingActivity : AppCompatActivity() {
                     val responseBody = response.body?.string()
                     Log.d("REGISTER_RESPONSE", responseBody ?: "")
                 } else {
-                    Log.e("REGISTER_ERROR", "Error: ${response.code}")
+                    // Manejo del error
+                    val responseBody = response.body?.string()
+
+                    // Intentamos parsear el cuerpo del mensaje como JSON
+                    try {
+                        val jsonObject = JSONObject(responseBody)
+                        val message = jsonObject.getString("message")
+                        Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
+                    } catch (e: Exception) {
+                        Log.e("REGISTER_ERROR", "Error parsing JSON: ${e.message}")
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("REGISTER_EXCEPTION", "Error", e)
+                Log.e("REGISTER_EXCEPTION", "Errorb", e)
             }
         }.start()
     }
