@@ -13,15 +13,23 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class LogingActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityLogingBinding
     private var usuariCreat: Boolean =false
         set(value) {
             if (value){
                 binding.validatebtn.visibility = View.VISIBLE
+                ChangeToNotEditable()
             }
             field = value
         }
+    private var usuariValidat: Boolean =false
+        set(value) {
+            if (value){
 
+            }
+            field = value
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +120,10 @@ class LogingActivity : AppCompatActivity() {
                 val response = client.newCall(request).execute()
                 val responseBody = response.body?.string()
                 if (response.isSuccessful) {
-                    Log.d("VALIDATE_RESPONSE", responseBody ?: "")
+                    runOnUiThread {
+                        Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                        usuariValidat=true
+                }
                 } else {
                     val jsonObject = JSONObject(responseBody)
                     val message = jsonObject.getString("message")
@@ -153,6 +164,14 @@ class LogingActivity : AppCompatActivity() {
                 Log.e("SMS_EXCEPTION", "Error", e)
             }
         }.start()
+    }
+
+    fun ChangeToNotEditable(){
+        binding.userInputLayout.isEnabled=false
+        binding.passwordInputLayout.isEnabled=false
+        binding.mailInputLayout.isEnabled=false
+        binding.nicknameInputLayout.isEnabled=false
+        binding.telephoneInputLayout.isEnabled=false
     }
 
 

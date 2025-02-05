@@ -10,7 +10,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/userInputLayout"
-        android:layout_width="160dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:hint="@string/username"
         app:boxBackgroundMode="outline"
@@ -29,7 +29,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordInputLayout"
-        android:layout_width="160dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:hint="@string/password"
         app:boxBackgroundMode="outline"
@@ -48,7 +48,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/mailInputLayout"
-        android:layout_width="160dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:hint="@string/mail"
         app:boxBackgroundMode="outline"
@@ -65,7 +65,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/nicknameInputLayout"
-        android:layout_width="160dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:hint="@string/nickname"
         app:boxBackgroundMode="outline"
@@ -82,7 +82,7 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/telephoneInputLayout"
-        android:layout_width="160dp"
+        android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:hint="@string/tlf"
         app:boxBackgroundMode="outline"
