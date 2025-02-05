@@ -1,5 +1,5 @@
 package com.project.imagia.ui.ullada
-
+import android.content.Intent
 import android.Manifest
 import android.content.Context
 import android.os.Bundle
@@ -39,6 +39,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import android.util.Base64
+import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -63,6 +64,9 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     private var _binding: FragmentUlladaBinding? = null
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+    private var token: Long? = null
+
+
 
 
     // This property is only valid between onCreateView and
@@ -82,6 +86,9 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         savedInstanceState: Bundle?
     ): View? {
 
+
+        val sharedPreferences = requireActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE)
+        token = sharedPreferences.getLong("token", 0)
         sensorManager = requireContext().getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         if (allPermissionsGranted()) {
@@ -340,10 +347,10 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body: RequestBody = json.toString().toRequestBody(mediaType)
 
-
+        Log.i("Token", token.toString())
         val request = Request.Builder()
             .url("https://imagia5.ieti.site/api/analitzar-imatge")
-            .addHeader("Authorization","Bearer ABCD1234EFGH5678IJKL")
+            .addHeader("Authorization","Bearer "+token.toString())
             .addHeader("Content-Type","application/json")
             .post(body)
             .build()
