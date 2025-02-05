@@ -14,11 +14,13 @@ import org.json.JSONObject
 
 class LogingActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLogingBinding
-    private val username : String = ""
-    private val password : String = ""
-    private val mail : String = ""
-    private val nickname : String = ""
-    private val telephone : Int = 0
+    private var usuariCreat: Boolean =false
+        set(value) {
+            if (value){
+                binding.validatebtn.visibility = View.VISIBLE
+            }
+            field = value
+        }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,13 +32,14 @@ class LogingActivity : AppCompatActivity() {
 
 
         binding.createbtn.setOnClickListener {
+            registrarUsuario(binding.userTextView.text.toString(),binding.mailTextView.text.toString(),
+                binding.passwordEditTextView.text.toString(),binding.telephoneTextView.text.toString(),
+                binding.nicknameTextView.text.toString())
 
-            registrarUsuario("Juan1","","123456","601076940","Juanito1")
-            binding.validatebtn.visibility = View.VISIBLE
         }
 
         binding.validatebtn.setOnClickListener {
-            validarUsuario("Juan1")
+            validarUsuario(binding.userTextView.text.toString())
 
         }
 
@@ -63,13 +66,16 @@ class LogingActivity : AppCompatActivity() {
         Thread {
             try {
                 val response = client.newCall(request).execute()
+
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
-                    Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                    runOnUiThread {
+                        Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                        usuariCreat=true
+                    }
                 } else {
                     // Manejo del error
                     val responseBody = response.body?.string()
-
                     // Intentamos parsear el cuerpo del mensaje como JSON
                     try {
                         val jsonObject = JSONObject(responseBody)
@@ -80,9 +86,11 @@ class LogingActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("REGISTER_EXCEPTION", "Errorb", e)
+                Log.e("REGISTER_EXCEPTION", "Error", e)
             }
         }.start()
+        Toast.makeText(baseContext,usuariCreat.toString(),Toast.LENGTH_SHORT).show()
+
     }
 
     private fun validarUsuario(username: String) {
@@ -102,11 +110,14 @@ class LogingActivity : AppCompatActivity() {
         Thread {
             try {
                 val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
                     Log.d("VALIDATE_RESPONSE", responseBody ?: "")
                 } else {
-                    Log.e("VALIDATE_ERROR", "Error: ${response.code}")
+                    val jsonObject = JSONObject(responseBody)
+                    val message = jsonObject.getString("message")
+                    Log.e("VALIDATE_ERROR", "Error: ${response.code} \n" +
+                            "Message: $message")
                 }
             } catch (e: Exception) {
                 Log.e("VALIDATE_EXCEPTION", "Error", e)
