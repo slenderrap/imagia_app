@@ -1,9 +1,12 @@
 package com.project.imagia
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.project.imagia.databinding.ActivityLogingBinding
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -26,10 +29,46 @@ class LogingActivity : AppCompatActivity() {
     private var usuariValidat: Boolean =false
         set(value) {
             if (value){
-
+                GenerarDialeg()
             }
             field = value
         }
+    private var smsValidat: Boolean = false
+        set(value) {
+            if (value){
+                val sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
+                val editor = sharedPreferences.edit()
+                editor.putString("nombre", binding.userTextView.text.toString())
+                editor.putInt("token", 25)
+                startActivity(Intent(this,MainActivity::class.java))
+                finish()
+            }
+            field = value
+        }
+
+    private fun GenerarDialeg() {
+        val input = EditText(this)
+        val ad = AlertDialog.Builder(this)
+
+        try {
+            ad.setMessage("Introdueix el codi de validació.")
+                .setTitle("Validant via SMS")
+                .setView(input)
+                .setPositiveButton("Validar") { _, _ ->
+                    val sms = input.text.toString()
+                    if (sms.isEmpty()) {
+                        Toast.makeText(this, "Has d'introduir el teu nom", Toast.LENGTH_SHORT).show()
+                        Log.i("Error", "No hi ha cap sms")
+                    } else {
+                        validarSms(binding.userTextView.text.toString(),sms)
+                    }
+                }
+                .show()
+        } catch (e: Exception) {
+            Log.e("DIALOG_ERROR", "Error al mostrar el diálogo", e)
+        }
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,7 +195,10 @@ class LogingActivity : AppCompatActivity() {
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
-                    Log.d("SMS_RESPONSE", responseBody ?: "")
+                    runOnUiThread {
+                        Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                        smsValidat =true
+                    }
                 } else {
                     Log.e("SMS_ERROR", "Error: ${response.code}")
                 }
