@@ -23,7 +23,7 @@
             android:id="@+id/userTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#3C3744"
+            android:textColor = "@color/white"
             android:textSize="16sp"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -43,9 +43,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            android:textColor = "@color/white"
             android:textSize="16sp"/>
     </com.google.android.material.textfield.TextInputLayout>
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/mailInputLayout"
         android:layout_width="180dp"
@@ -60,6 +60,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/mailTextView"
             android:layout_width="match_parent"
+            android:textColor = "@color/white"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -77,6 +78,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/nicknameTextView"
             android:layout_width="match_parent"
+            android:textColor = "@color/white"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -94,6 +96,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/telephoneTextView"
             android:layout_width="match_parent"
+            android:textColor = "@color/white"
             android:layout_height="wrap_content"/>
     </com.google.android.material.textfield.TextInputLayout>
 
