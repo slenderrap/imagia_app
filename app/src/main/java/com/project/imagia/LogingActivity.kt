@@ -61,7 +61,7 @@ class LogingActivity : AppCompatActivity() {
                 .setPositiveButton("Validar") { _, _ ->
                     val sms = input.text.toString()
                     if (sms.isEmpty()) {
-                        Toast.makeText(this, "Has d'introduir el teu nom", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Has d'introduir un codi", Toast.LENGTH_SHORT).show()
                         Log.i("Error", "No hi ha cap sms")
                     } else {
                         validarSms(binding.userTextView.text.toString(),sms)
@@ -197,15 +197,17 @@ class LogingActivity : AppCompatActivity() {
         Thread {
             try {
                 val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
                     runOnUiThread {
                         Log.d("REGISTER_RESPONSE", responseBody ?: "")
                         tokenReceived = JSONObject(responseBody).get("data").toString().toLong();
                         smsValidat =true
                     }
                 } else {
-                    Log.e("SMS_ERROR", "Error: ${response.code}")
+                    val jsonObject = JSONObject(responseBody)
+                    val message = jsonObject.getString("message")
+                    Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
                 }
             } catch (e: Exception) {
                 Log.e("SMS_EXCEPTION", "Error", e)
