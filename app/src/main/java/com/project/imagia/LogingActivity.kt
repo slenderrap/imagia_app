@@ -18,6 +18,7 @@ import org.json.JSONObject
 class LogingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLogingBinding
+    private var tokenReceived: Long = -1;
     private var usuariCreat: Boolean =false
         set(value) {
             if (value){
@@ -39,8 +40,11 @@ class LogingActivity : AppCompatActivity() {
                 val sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
                 val editor = sharedPreferences.edit()
                 editor.putString("nombre", binding.userTextView.text.toString())
-                editor.putInt("token", 25)
+                editor.putLong("token", tokenReceived)
+                editor.apply()
+                Log.d("TOKEN RECEIVED","Se ha recibido el token: "+tokenReceived)
                 startActivity(Intent(this,MainActivity::class.java))
+                Log.d("TOKEN RECEIVED","Se ha iniciado la actividad")
                 finish()
             }
             field = value
@@ -197,6 +201,7 @@ class LogingActivity : AppCompatActivity() {
                     val responseBody = response.body?.string()
                     runOnUiThread {
                         Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                        tokenReceived = JSONObject(responseBody).get("data").toString().toLong();
                         smsValidat =true
                     }
                 } else {

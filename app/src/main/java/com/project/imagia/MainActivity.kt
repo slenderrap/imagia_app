@@ -29,8 +29,8 @@ class MainActivity : AppCompatActivity() {
 
         val sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
         val nombre = sharedPreferences.getString("nombre", "Default")
-        val token = sharedPreferences.getInt("token", 0)
-        if(nombre.equals("Default") && token==0) {
+        val token = sharedPreferences.getLong("token", 0)
+        if(nombre.equals("Default") && token == 0L) {
             startActivity(Intent(this,LogingActivity::class.java))
             finish()
         }
