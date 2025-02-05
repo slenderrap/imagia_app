@@ -2,7 +2,6 @@ package com.project.imagia.ui.ullada
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -12,19 +11,19 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.project.imagia.databinding.FragmentUlladaBinding
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Build
+import android.net.Uri
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -33,8 +32,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -42,17 +39,18 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import android.util.Base64
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.project.imagia.MainActivity
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
 
 
 typealias LumaListener = (luma: Double) -> Unit
@@ -70,15 +68,14 @@ class UlladaFragment : Fragment() ,SensorEventListener{
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-
+    private var tts: TextToSpeech?=null
     private var tapCounterX = 0
     private var tapCounterY = 0
     private var tapCounterZ = 0
     private val threshold = 6.0
     private val timeWindow = 300L
     private var lastTapTime = 0L
-
-
+    private var imatgeEnviada=false
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -94,13 +91,17 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         }
 
 
+
         val ulladaViewModel =
             ViewModelProvider(this).get(UlladaViewModel::class.java)
 
         _binding = FragmentUlladaBinding.inflate(inflater, container, false)
         val root: View = binding.root
         // Set up the listeners for take photo and video capture buttons
-        _binding!!.button.setOnClickListener { takePhoto() }
+
+        _binding!!.button.setOnClickListener {
+            takePhoto()
+        }
 
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)!!
         linearAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)!!
@@ -112,12 +113,25 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         ulladaViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
+        tts = TextToSpeech(requireContext()){ status->
+            if (status != TextToSpeech.ERROR){
+                tts?.language= Locale("CA","ES")
+            }
+        }
         return binding.root
     }
     private fun takePhoto() {
-
-        // Get a stable reference of the modifiable image capture use case
+        Log.i("INFO","El estado es ${imatgeEnviada}")
         val imageCapture = imageCapture ?: return
+        if (imatgeEnviada) {
+            Toast.makeText(requireContext(),"Ja has fet una foto",Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        imatgeEnviada=true
+        Toast.makeText(requireContext(), "S'ha fet una foto", Toast.LENGTH_SHORT).show()
+        // Get a stable reference of the modifiable image capture use case
+
 
         // Create time stamped name and MediaStore entry.
         val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
@@ -131,35 +145,40 @@ class UlladaFragment : Fragment() ,SensorEventListener{
 
         // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(requireContext().contentResolver,
+            .Builder(
+                requireContext().contentResolver,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues)
+                contentValues
+            )
             .build()
 
-
         // been taken
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(this.requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+        imageCapture?.takePicture(
+            ContextCompat.getMainExecutor(requireContext()),
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    val bitmap = image.toBitmap() // Convierte ImageProxy a Bitmap fácilmente
+                    val compressedUri = compressImage(
+                        requireContext(),
+                        saveBitmapToCache(requireContext(), bitmap)
+                    )
+                    sendImageToServer(compressedUri.toString())
+                    image.close()
+
                 }
 
-                override fun
-                        onImageSaved(output: ImageCapture.OutputFileResults){
-                    val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
-
-                    output.savedUri?.let { imageUri ->
-                        sendImageToServer(imageUri.toString())
-                    }
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                 }
             }
         )
     }
 
+    private fun saveBitmapToCache(context: Context, bitmap: Bitmap): Uri {
+        val tempFile = File(context.cacheDir, "temp_image.jpg")
+        FileOutputStream(tempFile).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
+        return FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -300,18 +319,23 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             return
         }
 
+
         // Convierte la imagen a Base64
         val base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT)
 
         // Crear el JSON con la imagen
         val json = JSONObject()
-        val imageInArray: Array<String> = arrayOf(base64Image)
+
+        val imageInArray: JSONArray = JSONArray()
+        imageInArray.put(base64Image)
         json.put("images", imageInArray)
-        json.put("prompt", "Describe la imagen")
+        json.put("prompt", "Descriu la imatge resumidament y en catala")
         json.put("stream", false)
 
         // Crear cliente OkHttp
-        val client = OkHttpClient()
+        val client = OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build()
 
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val body: RequestBody = json.toString().toRequestBody(mediaType)
@@ -320,6 +344,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         val request = Request.Builder()
             .url("https://imagia5.ieti.site/api/analitzar-imatge")
             .addHeader("Authorization","Bearer ABCD1234EFGH5678IJKL")
+            .addHeader("Content-Type","application/json")
             .post(body)
             .build()
 
@@ -327,16 +352,45 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             try {
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
+                    val responseBody = response.body?.string()?.replace("*","")
                     Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
+                    tts?.speak(responseBody?.let { JSONObject(it).get("data").toString() },TextToSpeech.QUEUE_FLUSH,null,null)
                 } else {
-                    Log.e("POST_ERROR", "Error en la petición: ${response.code}")
+                    Log.e("POST_ERROR", "Error en la petición: ${response.code}: ${response.message}")
                 }
+                imatgeEnviada=false
+
             } catch (e: Exception) {
+                imatgeEnviada=false
                 Log.e("POST_EXCEPTION", "Error al enviar la imagen", e)
             }
         }.start()
     }
+
+    private fun compressImage(context: Context, imageUri: Uri): Uri? {
+        return try {
+            // Leer la imagen como Bitmap
+            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            // Crear un archivo temporal para guardar la imagen comprimida
+            val tempFile = File(context.cacheDir, "compressed_image.jpg")
+            val outputStream = FileOutputStream(tempFile)
+
+            // Comprimir la imagen sin cambiar su resolución
+            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream) // Calidad al 50%
+            outputStream.flush()
+            outputStream.close()
+
+            // Devolver la URI del archivo comprimido
+            Uri.fromFile(tempFile)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al comprimir la imagen", e)
+            null
+        }
+    }
+
 
 
 }
