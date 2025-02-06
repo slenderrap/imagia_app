@@ -105,11 +105,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/crear_usuari"
-        app:layout_constraintBottom_toTopOf="@+id/validatebtn"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/telephoneInputLayout"/>
-
+        app:layout_constraintTop_toBottomOf="@+id/telephoneInputLayout" />
 
 
     <Button
@@ -117,12 +116,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/validar"
-        tools:layout_editor_absoluteX="182dp"
-        tools:layout_editor_absoluteY="566dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createbtn"
-    />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

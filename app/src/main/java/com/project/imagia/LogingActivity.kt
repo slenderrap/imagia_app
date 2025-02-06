@@ -86,6 +86,8 @@ class LogingActivity : AppCompatActivity() {
             registrarUsuario(binding.userTextView.text.toString(),binding.mailTextView.text.toString(),
                 binding.passwordEditTextView.text.toString(),binding.telephoneTextView.text.toString(),
                 binding.nicknameTextView.text.toString())
+            binding.userTextView.visibility
+
 
         }
 
@@ -140,8 +142,6 @@ class LogingActivity : AppCompatActivity() {
                 Log.e("REGISTER_EXCEPTION", "Error", e)
             }
         }.start()
-        Toast.makeText(baseContext,usuariCreat.toString(),Toast.LENGTH_SHORT).show()
-
     }
 
     private fun validarUsuario(username: String) {
@@ -215,12 +215,13 @@ class LogingActivity : AppCompatActivity() {
         }.start()
     }
 
-    fun ChangeToNotEditable(){
-        binding.userInputLayout.isEnabled=false
-        binding.passwordInputLayout.isEnabled=false
-        binding.mailInputLayout.isEnabled=false
-        binding.nicknameInputLayout.isEnabled=false
-        binding.telephoneInputLayout.isEnabled=false
+    fun ChangeToNotEditable() {
+        binding.userInputLayout.visibility = View.GONE
+        binding.passwordInputLayout.visibility = View.GONE
+        binding.mailInputLayout.visibility = View.GONE
+        binding.nicknameInputLayout.visibility = View.GONE
+        binding.telephoneInputLayout.visibility = View.GONE
+        binding.createbtn.visibility = View.GONE
     }
 
 
