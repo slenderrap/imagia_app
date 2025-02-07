@@ -131,9 +131,13 @@ class LogingActivity : AppCompatActivity() {
                     val responseBody = response.body?.string()
                     // Intentamos parsear el cuerpo del mensaje como JSON
                     try {
-                        val jsonObject = JSONObject(responseBody)
-                        val message = jsonObject.getString("message")
-                        Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
+                        if (responseBody!!.contains("{")) {
+                            val jsonObject = JSONObject(responseBody)
+                            val message = jsonObject.getString("message")
+                            Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
+                        }else{
+                            Log.e("REGISTER_ERROR", "Error: $responseBody")
+                        }
                     } catch (e: Exception) {
                         Log.e("REGISTER_ERROR", "Error parsing JSON: ${e.message}")
                     }
@@ -168,10 +172,16 @@ class LogingActivity : AppCompatActivity() {
                         usuariValidat=true
                 }
                 } else {
-                    val jsonObject = JSONObject(responseBody)
-                    val message = jsonObject.getString("message")
-                    Log.e("VALIDATE_ERROR", "Error: ${response.code} \n" +
-                            "Message: $message")
+                    if (responseBody!!.contains("{")) {
+                        val jsonObject = JSONObject(responseBody)
+                        val message = jsonObject.getString("message")
+                        Log.e(
+                            "VALIDATE_ERROR", "Error: ${response.code} \n" +
+                                    "Message: $message"
+                        )
+                    }else{
+                        Log.e("REGISTER_ERROR", "Error: $responseBody")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("VALIDATE_EXCEPTION", "Error", e)
@@ -201,13 +211,21 @@ class LogingActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     runOnUiThread {
                         Log.d("REGISTER_RESPONSE", responseBody ?: "")
+                        if (responseBody!!.contains("{")) {
                         tokenReceived = JSONObject(responseBody).get("data").toString().toLong();
                         smsValidat =true
+                        }else{
+                            Log.e("REGISTER_ERROR", "Error: $responseBody")
+                        }
                     }
                 } else {
-                    val jsonObject = JSONObject(responseBody)
-                    val message = jsonObject.getString("message")
-                    Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
+                    if (responseBody!!.contains("{")) {
+                        val jsonObject = JSONObject(responseBody)
+                        val message = jsonObject.getString("message")
+                        Log.e("REGISTER_ERROR", "Error: ${response.code} \nMessage: $message")
+                    }else{
+                        Log.e("REGISTER_ERROR", "Error: $responseBody")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("SMS_EXCEPTION", "Error", e)

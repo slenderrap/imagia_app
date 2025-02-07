@@ -52,6 +52,7 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
+import android.app.Activity
 
 
 typealias LumaListener = (luma: Double) -> Unit
@@ -354,7 +355,6 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             .addHeader("Content-Type","application/json")
             .post(body)
             .build()
-
         Thread {
             try {
                 val response = client.newCall(request).execute()
@@ -363,6 +363,12 @@ class UlladaFragment : Fragment() ,SensorEventListener{
                     Log.d("POST_RESPONSE", "Respuesta del servidor: $responseBody")
                     tts?.speak(responseBody?.let { JSONObject(it).get("data").toString() },TextToSpeech.QUEUE_FLUSH,null,null)
                 } else {
+                    if (response.code.toString()=="429"){
+                        requireActivity().runOnUiThread {
+                        Toast.makeText(requireContext(),"Has esgotat la quota diaria",Toast.LENGTH_SHORT).show()
+                            tts?.speak("Has esgotat la quota diaria",TextToSpeech.QUEUE_FLUSH,null,null)
+                    }
+                    }
                     Log.e("POST_ERROR", "Error en la petición: ${response.code}: ${response.message}")
                 }
                 imatgeEnviada=false
