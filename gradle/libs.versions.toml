@@ -16,8 +16,12 @@ cameraLifecycle = "1.4.1"
 cameraCore = "1.4.1"
 okhttp = "4.11.0"
 activity = "1.10.0"
+androidx-cardview = "1.0.0"
+androidx-recyclerview = "1.4.0"
 
 [libraries]
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "androidx-cardview" }
+androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

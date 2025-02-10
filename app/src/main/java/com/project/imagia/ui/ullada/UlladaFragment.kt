@@ -165,7 +165,7 @@ class UlladaFragment : Fragment() ,SensorEventListener{
             ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    val bitmap = image.toBitmap() // Convierte ImageProxy a Bitmap fácilmente
+                    val bitmap = image.toBitmap()
                     val compressedUri = compressImage(
                         requireContext(),
                         saveBitmapToCache(requireContext(), bitmap)

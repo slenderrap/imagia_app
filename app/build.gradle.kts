@@ -61,8 +61,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.activity)
     implementation(libs.material)
-
-
+    implementation(libs.androidx.cardview)
+    implementation(libs.androidx.recyclerview)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
