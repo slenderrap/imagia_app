@@ -138,10 +138,8 @@ class UlladaFragment : Fragment() ,SensorEventListener{
 
         imatgeEnviada=true
         Toast.makeText(requireContext(), "S'ha fet una foto", Toast.LENGTH_SHORT).show()
-        // Get a stable reference of the modifiable image capture use case
 
 
-        // Create time stamped name and MediaStore entry.
         val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
             .format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
@@ -151,7 +149,6 @@ class UlladaFragment : Fragment() ,SensorEventListener{
         }
 
 
-        // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(
                 requireContext().contentResolver,

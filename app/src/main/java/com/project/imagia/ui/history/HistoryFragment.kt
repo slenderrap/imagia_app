@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
 
 class HistoryFragment : Fragment() {
 
@@ -43,13 +44,8 @@ class HistoryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val sampleData = listOf(
-            HistoryItem("Respuesta de prueba 1", "2025-02-09"),
-            HistoryItem("Respuesta de prueba 2", "2025-02-08"),
-            HistoryItem("Otra respuesta larga que debería truncarse...", "2025-02-07")
-        )
 
-        adapter = HistoryAdapter(sampleData)
+        adapter = HistoryAdapter(emptyList())
         binding.recyclerViewHistory.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewHistory.adapter = adapter
         loadHistoryFromServer()
@@ -66,9 +62,10 @@ class HistoryFragment : Fragment() {
                     .get()
                     .build()
                 val response = client.newCall(request).execute()
-                val responseBody = response.body
-                if (response.isSuccessful && responseBody!= null){
-                    val historyList = parseHistoryJson(responseBody.toString())
+                val responseBody = response.body?.string()
+                Log.i("OUTPUT",responseBody.toString())
+                if (response.isSuccessful){
+                    val historyList = parseHistoryJson(JSONObject(responseBody).get("data").toString())
                     withContext(Dispatchers.Main) {
                         adapter.updateData(historyList)
                     }
@@ -84,12 +81,13 @@ class HistoryFragment : Fragment() {
 
     private fun parseHistoryJson(jsonString: String): List<HistoryItem> {
         val list = mutableListOf<HistoryItem>()
+        Log.e("JSON",jsonString)
         val jsonArray = JSONArray(jsonString)
 
         for (i in 0 until jsonArray.length()) {
             val jsonObject = jsonArray.getJSONObject(i)
             val answer = jsonObject.getString("answer")
-            val promptDate = jsonObject.getString("promptdate")
+            val promptDate = jsonObject.getString("prompt_date")
             list.add(HistoryItem(answer, promptDate))
         }
         return list
