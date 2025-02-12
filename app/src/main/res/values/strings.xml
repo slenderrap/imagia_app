@@ -13,4 +13,5 @@
     <string name="validar">Validar usuari</string>
     <string name="resposta_server">Respuesta del servidor</string>
     <string name="data">Fecha</string>
+    <string name="carregant">Carregant...</string>
 </resources>

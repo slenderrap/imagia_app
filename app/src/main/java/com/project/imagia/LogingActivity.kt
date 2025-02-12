@@ -39,8 +39,17 @@ class LogingActivity : AppCompatActivity() {
             if (value){
                 val sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE)
                 val editor = sharedPreferences.edit()
-                editor.putString("nombre", binding.userTextView.text.toString())
-                editor.putLong("token", tokenReceived)
+                Log.i("USUARI_GUARDAR","Usuariguardant-se")
+
+                editor.putString("nom",binding.userTextView.text.toString())
+                editor.putLong("token",tokenReceived)
+                editor.putString("contrasenya",binding.passwordEditTextView.text.toString())
+                editor.putString("mail",binding.mailTextView.text.toString())
+                editor.putString("telefon",binding.telephoneTextView.text.toString())
+                editor.putString("nickname",binding.nicknameTextView.text.toString())
+
+                Log.i("USUARI_GUARDAR","Usuariguardat")
+
                 editor.apply()
                 Log.d("TOKEN RECEIVED","Se ha recibido el token: "+tokenReceived)
                 startActivity(Intent(this,MainActivity::class.java))
